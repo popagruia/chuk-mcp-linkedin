@@ -139,6 +139,16 @@ def setup_oauth() -> Optional[Any]:
     """Set up OAuth middleware if credentials are available."""
     global oauth_provider, _global_token_store
 
+    # Check for passthrough mode first
+    PASSTHROUGH_MODE = os.getenv("OAUTH_PASSTHROUGH_MODE", "false").lower() == "true"
+    
+    if PASSTHROUGH_MODE:
+        print("🔓 OAuth Passthrough Mode ENABLED")
+        print("   Server will accept LinkedIn tokens directly from Authorization header")
+        print("   No OAuth flow, no token storage, tokens passed straight to LinkedIn API")
+        print("   ⚠️  For testing/development only - not recommended for production")
+        return None  # No OAuth middleware needed
+
     OAUTH_ENABLED = os.getenv("OAUTH_ENABLED", "true").lower() == "true"
     LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
     LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
