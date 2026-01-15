@@ -40,11 +40,15 @@ except ImportError:
 # Import the unified server (OAuth auto-enabled if credentials present)
 from .async_server import mcp, setup_http_server
 
-# Setup logging
+# Setup logging - check for DEBUG environment variable
+log_level = logging.DEBUG if os.environ.get("DEBUG", "").lower() in ("1", "true", "yes") else logging.INFO
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+if log_level == logging.DEBUG:
+    logger.debug("Debug logging enabled - tool invocations will be logged with full details")
 
 
 async def run_stdio() -> None:

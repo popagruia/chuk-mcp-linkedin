@@ -15,6 +15,7 @@ from chuk_mcp_server.decorators import requires_auth
 from ..manager_factory import get_current_manager
 from ..posts.composition import ComposablePost
 from ..themes.theme_manager import ThemeManager
+from ..utils.tool_logger import log_tool_invocation
 
 # Cache of ComposablePost instances per draft ID
 _post_cache: Dict[str, ComposablePost] = {}
@@ -76,6 +77,7 @@ def register_composition_tools(mcp: Any) -> Dict[str, Any]:
 
     @mcp.tool  # type: ignore[misc]
     @requires_auth()
+    @log_tool_invocation
     async def linkedin_add_hook(
         hook_type: str, content: str, _external_access_token: Optional[str] = None
     ) -> str:
@@ -98,6 +100,7 @@ def register_composition_tools(mcp: Any) -> Dict[str, Any]:
 
     @mcp.tool  # type: ignore[misc]
     @requires_auth()
+    @log_tool_invocation
     async def linkedin_add_body(
         content: str, structure: str = "linear", _external_access_token: Optional[str] = None
     ) -> str:
@@ -120,6 +123,7 @@ def register_composition_tools(mcp: Any) -> Dict[str, Any]:
 
     @mcp.tool  # type: ignore[misc]
     @requires_auth()
+    @log_tool_invocation
     async def linkedin_add_cta(
         cta_type: str, text: str, _external_access_token: Optional[str] = None
     ) -> str:
@@ -666,6 +670,7 @@ def register_composition_tools(mcp: Any) -> Dict[str, Any]:
 
     @mcp.tool  # type: ignore[misc]
     @requires_auth()
+    @log_tool_invocation
     async def linkedin_compose_post(
         optimize: bool = True, _external_access_token: Optional[str] = None
     ) -> str:

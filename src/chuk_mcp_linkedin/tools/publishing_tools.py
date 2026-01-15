@@ -5,11 +5,13 @@ Publishing tools for LinkedIn API integration.
 Handles actual posting to LinkedIn via the API with OAuth authentication.
 """
 
+import json
 from typing import Any, Dict, Optional
 
 from chuk_mcp_server.decorators import requires_auth
 
 from ..manager_factory import get_current_manager
+from ..utils.tool_logger import log_tool_invocation
 
 
 def register_publishing_tools(mcp: Any, linkedin_client: Any) -> Dict[str, Any]:
@@ -19,6 +21,7 @@ def register_publishing_tools(mcp: Any, linkedin_client: Any) -> Dict[str, Any]:
 
     @mcp.tool  # type: ignore[misc]
     @requires_auth()
+    @log_tool_invocation
     async def linkedin_publish(
         visibility: str = "PUBLIC",
         dry_run: bool = False,
@@ -217,7 +220,85 @@ def register_publishing_tools(mcp: Any, linkedin_client: Any) -> Dict[str, Any]:
                 "error_type": "connection_failed",
             }
 
+    @mcp.tool  # type: ignore[misc]
+    @requires_auth()
+    @log_tool_invocation
+    async def linkedin_test_userinfo(
+        _external_access_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Test LinkedIn userinfo endpoint to verify token and see user details.
+        
+        Returns:
+            User information from LinkedIn's /v2/userinfo endpoint
+        """
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        if not _external_access_token:
+            return {
+                "status": "error",
+                "error": "No access token provided",
+            }
+        
+        try:
+            import httpx
+            
+            # Log HTTP request
+            logger.info("=" * 80)
+            logger.info("🌐 HTTP REQUEST TO LINKEDIN API (userinfo test)")
+            logger.info(f"📍 URL: https://api.linkedin.com/v2/userinfo")
+            logger.info(f"🔧 Method: GET")
+            logger.info(f"📋 Headers:")
+            if len(_external_access_token) > 30:
+                logger.info(f"   Authorization: Bearer {_external_access_token[:20]}...{_external_access_token[-10:]}")
+            else:
+                logger.info(f"   Authorization: Bearer {_external_access_token[:10]}...***")
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.linkedin.com/v2/userinfo",
+                    headers={"Authorization": f"Bearer {_external_access_token}"},
+                    timeout=10.0,
+                )
+                
+                # Log HTTP response
+                logger.info(f"📥 HTTP RESPONSE FROM LINKEDIN API (userinfo test)")
+                logger.info(f"Status Code: {response.status_code}")
+                logger.info(f"📋 Response Headers:")
+                for key, value in response.headers.items():
+                    logger.info(f"   {key}: {value}")
+                logger.info(f"📦 Response Body:")
+                try:
+                    response_json = response.json()
+                    logger.info(f"   {json.dumps(response_json, indent=2)}")
+                except Exception:
+                    logger.info(f"   {response.text[:500]}")
+                logger.info("=" * 80)
+                
+                if response.status_code == 200:
+                    return {
+                        "status": "success",
+                        "userinfo": response.json(),
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "status_code": response.status_code,
+                        "error": response.text,
+                    }
+                    
+        except Exception as e:
+            logger.error(f"❌ ERROR: {str(e)}")
+            logger.error("=" * 80)
+            return {
+                "status": "error",
+                "error": str(e),
+            }
+    
     return {
         "linkedin_publish": linkedin_publish,
         "linkedin_test_connection": linkedin_test_connection,
+        "linkedin_test_userinfo": linkedin_test_userinfo,
     }

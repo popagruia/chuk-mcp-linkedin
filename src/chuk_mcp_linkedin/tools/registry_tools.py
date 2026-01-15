@@ -13,6 +13,8 @@ from typing import Any, Dict, Optional
 
 from chuk_mcp_server.decorators import requires_auth
 
+from ..utils.tool_logger import log_tool_invocation
+
 
 def register_registry_tools(mcp: Any) -> Dict[str, Any]:
     """Register component registry tools with the MCP server"""
@@ -69,6 +71,7 @@ def register_registry_tools(mcp: Any) -> Dict[str, Any]:
 
     @mcp.tool  # type: ignore[misc]
     @requires_auth()
+    @log_tool_invocation
     async def linkedin_get_system_overview(_external_access_token: Optional[str] = None) -> str:
         """
         Get complete overview of the design system.

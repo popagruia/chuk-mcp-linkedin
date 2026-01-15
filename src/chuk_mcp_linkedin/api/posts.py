@@ -5,12 +5,17 @@ LinkedIn Posts API operations.
 Handles creating text posts, image posts, video posts, and other post types.
 """
 
+import json
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import httpx
 
 from .errors import LinkedInAPIError
+
+# Logger for HTTP request/response logging
+logger = logging.getLogger(__name__)
 
 
 class PostsAPIMixin:
@@ -60,15 +65,51 @@ class PostsAPIMixin:
 
         # Use new Posts API endpoint
         url = "https://api.linkedin.com/rest/posts"
+        headers = self._get_headers(use_rest_api=True)  # type: ignore[attr-defined]
+
+        # Log HTTP request details
+        logger.info("=" * 80)
+        logger.info("🌐 HTTP REQUEST TO LINKEDIN API")
+        logger.info(f"📍 URL: {url}")
+        logger.info(f"🔧 Method: POST")
+        logger.info(f"📋 Headers:")
+        for key, value in headers.items():
+            if key.lower() == "authorization":
+                # Show partial token for debugging
+                if len(value) > 30:
+                    logger.info(f"   {key}: {value[:20]}...{value[-10:]}")
+                else:
+                    logger.info(f"   {key}: {value[:10]}...{value[-4:]}")
+            else:
+                logger.info(f"   {key}: {value}")
+        logger.info(f"📦 Payload:")
+        logger.info(f"   {json.dumps(payload, indent=2)}")
 
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
                     url,
                     json=payload,
-                    headers=self._get_headers(use_rest_api=True),  # type: ignore[attr-defined]
+                    headers=headers,
                     timeout=30.0,
                 )
+
+                # Log HTTP response details
+                logger.info(f"📥 HTTP RESPONSE FROM LINKEDIN API")
+                logger.info(f"✅ Status Code: {response.status_code}")
+                logger.info(f"📋 Response Headers:")
+                for key, value in response.headers.items():
+                    logger.info(f"   {key}: {value}")
+                logger.info(f"📦 Response Body:")
+                if response.content:
+                    try:
+                        response_json = response.json()
+                        logger.info(f"   {json.dumps(response_json, indent=2)}")
+                    except Exception:
+                        logger.info(f"   {response.text[:500]}")
+                else:
+                    logger.info("   (empty)")
+                logger.info("=" * 80)
 
                 # Check for errors
                 if response.status_code not in (200, 201):
@@ -100,6 +141,8 @@ class PostsAPIMixin:
                 return response_data
 
             except httpx.HTTPError as e:
+                logger.error(f"❌ HTTP ERROR: {str(e)}")
+                logger.error("=" * 80)
                 raise LinkedInAPIError(f"HTTP error while posting to LinkedIn: {str(e)}")
 
     async def create_image_post(
@@ -365,15 +408,51 @@ class PostsAPIMixin:
             LinkedInAPIError: If API call fails
         """
         url = "https://api.linkedin.com/rest/posts"
+        headers = self._get_headers(use_rest_api=True)  # type: ignore[attr-defined]
+
+        # Log HTTP request details
+        logger.info("=" * 80)
+        logger.info("🌐 HTTP REQUEST TO LINKEDIN API")
+        logger.info(f"📍 URL: {url}")
+        logger.info(f"🔧 Method: POST")
+        logger.info(f"📋 Headers:")
+        for key, value in headers.items():
+            if key.lower() == "authorization":
+                # Show partial token for debugging
+                if len(value) > 30:
+                    logger.info(f"   {key}: {value[:20]}...{value[-10:]}")
+                else:
+                    logger.info(f"   {key}: {value[:10]}...{value[-4:]}")
+            else:
+                logger.info(f"   {key}: {value}")
+        logger.info(f"📦 Payload:")
+        logger.info(f"   {json.dumps(payload, indent=2)}")
 
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
                     url,
                     json=payload,
-                    headers=self._get_headers(use_rest_api=True),  # type: ignore[attr-defined]
+                    headers=headers,
                     timeout=30.0,
                 )
+
+                # Log HTTP response details
+                logger.info(f"📥 HTTP RESPONSE FROM LINKEDIN API")
+                logger.info(f"✅ Status Code: {response.status_code}")
+                logger.info(f"📋 Response Headers:")
+                for key, value in response.headers.items():
+                    logger.info(f"   {key}: {value}")
+                logger.info(f"📦 Response Body:")
+                if response.content:
+                    try:
+                        response_json = response.json()
+                        logger.info(f"   {json.dumps(response_json, indent=2)}")
+                    except Exception:
+                        logger.info(f"   {response.text[:500]}")
+                else:
+                    logger.info("   (empty)")
+                logger.info("=" * 80)
 
                 if response.status_code not in (200, 201):
                     error_msg = f"LinkedIn API error: {response.status_code}"
@@ -404,4 +483,6 @@ class PostsAPIMixin:
                 return response_data
 
             except httpx.HTTPError as e:
+                logger.error(f"❌ HTTP ERROR: {str(e)}")
+                logger.error("=" * 80)
                 raise LinkedInAPIError(f"HTTP error while posting to LinkedIn: {str(e)}")

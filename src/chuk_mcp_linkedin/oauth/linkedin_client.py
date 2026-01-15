@@ -100,16 +100,21 @@ class LinkedInOAuthClient:
         Raises:
             httpx.HTTPError: If token exchange fails
         """
+        from urllib.parse import urlencode
+        
+        # Manually URL-encode the form data to ensure proper encoding of special characters
+        form_data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": self.redirect_uri,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }
+        
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 self.TOKEN_URL,
-                data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": self.redirect_uri,
-                    "client_id": self.client_id,
-                    "client_secret": self.client_secret,
-                },
+                content=urlencode(form_data),
                 headers={
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
@@ -134,15 +139,20 @@ class LinkedInOAuthClient:
         Raises:
             httpx.HTTPError: If token refresh fails
         """
+        from urllib.parse import urlencode
+        
+        # Manually URL-encode the form data to ensure proper encoding of special characters
+        form_data = {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+        }
+        
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 self.TOKEN_URL,
-                data={
-                    "grant_type": "refresh_token",
-                    "refresh_token": refresh_token,
-                    "client_id": self.client_id,
-                    "client_secret": self.client_secret,
-                },
+                content=urlencode(form_data),
                 headers={
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
